@@ -5,62 +5,73 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* public/배경.png 파일 불러오기 */
+/* 화면 전체 영역 및 중앙 정렬 고정 */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* public/bg.png 이미지 불러오기 */
 .bg-container {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
-  background: url('/배경.png') no-repeat center center / cover;
+  background: url('/bg.png') no-repeat center center / cover;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
 }
 
-/* 배경을 약간 어둡게 깔아주는 오버레이 (글자 잘 보이게) */
+/* 배경 어둡게 까는 오버레이 */
 .overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.7);
   z-index: 1;
 }
 
+/* 중앙 카드 */
 .card {
   position: relative;
   z-index: 2;
   width: 90%;
   max-width: 380px;
   padding: 40px 28px;
-  background: rgba(20, 20, 25, 0.7);
+  background: rgba(20, 20, 25, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   text-align: center;
   color: #ffffff;
 }
 
 h1 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   margin-bottom: 12px;
-  letter-spacing: 1px;
+  color: #ffffff;
 }
 
 .description {
-  font-size: 15px;
+  font-size: 14px;
   color: #d1d5db;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  line-height: 1.5;
 }
 
 .submit-btn {
   display: block;
   width: 100%;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   background-color: #ff003c;
   color: #ffffff;
   font-size: 16px;
