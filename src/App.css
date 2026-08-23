@@ -2,63 +2,76 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-  background-color: #f9fafb;
-  color: #111827;
+/* public/배경.png 파일 불러오기 */
+.bg-container {
+  width: 100vw;
+  height: 100vh;
+  background: url('/배경.png') no-repeat center center / cover;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  position: relative;
 }
 
-.container {
+/* 배경을 약간 어둡게 깔아주는 오버레이 (글자 잘 보이게) */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1;
 }
 
 .card {
-  width: 100%;
-  max-width: 400px;
-  padding: 40px 32px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 2;
+  width: 90%;
+  max-width: 380px;
+  padding: 40px 28px;
+  background: rgba(20, 20, 25, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   text-align: center;
+  color: #ffffff;
 }
 
 h1 {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   margin-bottom: 12px;
-  color: #111827;
+  letter-spacing: 1px;
 }
 
 .description {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 28px;
-  line-height: 1.5;
+  font-size: 15px;
+  color: #d1d5db;
+  margin-bottom: 32px;
 }
 
 .submit-btn {
   display: block;
   width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  background-color: #2563eb;
+  padding: 16px;
+  border-radius: 10px;
+  background-color: #ff003c;
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   text-decoration: none;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 60, 0.4);
+  transition: all 0.2s ease;
 }
 
 .submit-btn:hover {
-  background-color: #1d4ed8;
+  background-color: #e60036;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 0, 60, 0.6);
 }
