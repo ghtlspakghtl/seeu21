@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import './App.css';
 
-// 파이어베이스 설정값 적용 완료
 const firebaseConfig = {
   apiKey: "AIzaSyCq1ixjy0orxEhiPFa4wcLG83ryVw15-j0",
   authDomain: "seeu21-28870.firebaseapp.com",
@@ -34,23 +33,22 @@ function App() {
   const [tempSchedule, setTempSchedule] = useState(defaultSchedule);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 파이어베이스에서 실시간 일정 불러오기
+  // 파이어베이스 실시간 리스너 (데이터 바뀌면 모든 사용자 화면에 즉시 반영)
   useEffect(() => {
-    const fetchSchedule = async () => {
-      try {
-        const docRef = doc(db, 'schedules', 'project_schedule');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setScheduleData(docSnap.data());
-          setTempSchedule(docSnap.data());
-        } else {
-          await setDoc(docRef, defaultSchedule);
-        }
-      } catch (error) {
-        console.error("데이터 불러오기 실패:", error);
+    const docRef = doc(db, 'schedules', 'project_schedule');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setScheduleData(data);
+        setTempSchedule(data);
+      } else {
+        setDoc(docRef, defaultSchedule);
       }
-    };
-    fetchSchedule();
+    }, (error) => {
+      console.error("실시간 데이터 동기화 에러:", error);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -90,8 +88,7 @@ function App() {
     try {
       const docRef = doc(db, 'schedules', 'project_schedule');
       await setDoc(docRef, tempSchedule);
-      setScheduleData(tempSchedule);
-      alert('참여 가능 일정이 서버에 저장되어 모든 사용자에게 반영되었습니다.');
+      alert('서버에 저장되어 모든 사용자에게 실시간 반영되었습니다.');
     } catch (error) {
       console.error("저장 실패:", error);
       alert('저장 중 오류가 발생했습니다.');
@@ -122,7 +119,7 @@ function App() {
           </form>
         ) : (
           <div className="admin-dashboard">
-            <p className="admin-notice">클릭해서 '가능 / 불가능' 상태를 변경하세요. 저장하면 전체에 반영됩니다.</p>
+            <p className="admin-notice">클릭해서 '가능 / 불가능' 상태를 변경하세요.</p>
             <div className="table-responsive">
               <table className="schedule-table">
                 <thead>
@@ -172,23 +169,29 @@ function App() {
       <main className="content-grid">
         <section className="media-card phone-card">
           <h2>주인공 폰</h2>
-          <video controls width="100%">
-            <source src="/주인공 폰.mp4" type="video/mp4" />
-            브라우저가 동영상 재생을 지원하지 않습니다.
-          </video>
+          <div className="video-wrapper vertical">
+            <video controls>
+              <source src="/주인공 폰.mp4" type="video/mp4" />
+              브라우저가 동영상 재생을 지원하지 않습니다.
+            </video>
+          </div>
         </section>
 
         <section className="media-card">
           <h2>경찰청 무전내용</h2>
-          <video controls width="100%">
-            <source src="/경찰청 무전내용.mp4" type="video/mp4" />
-            브라우저가 동영상 재생을 지원하지 않습니다.
-          </video>
+          <div className="video-wrapper horizontal">
+            <video controls>
+              <source src="/경찰청 무전내용.mp4" type="video/mp4" />
+              브라우저가 동영상 재생을 지원하지 않습니다.
+            </video>
+          </div>
         </section>
 
         <section className="media-card clickable" onClick={() => setIsModalOpen(true)}>
           <h2>관련 뉴스 자료 (클릭해서 확대)</h2>
-          <img src="/news.png" alt="뉴스 자료" className="preview-img" />
+          <div className="img-wrapper">
+            <img src="/news.png" alt="뉴스 자료" className="preview-img" />
+          </div>
         </section>
       </main>
 
