@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, collection, addTimestamp } from 'firebase/firestore';
 import './App.css';
 
 const firebaseConfig = {
@@ -31,9 +31,16 @@ function App() {
   
   const [scheduleData, setScheduleData] = useState(defaultSchedule);
   const [tempSchedule, setTempSchedule] = useState(defaultSchedule);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+  
+  // 참가 신청 모달 상태
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState({ date: '', timeSlot: '' });
+  const [applicantName, setApplicantName] = useState('');
+  const [applicantContact, setApplicantContact] = useState('');
 
-  // 파이어베이스 실시간 리스너 (데이터 바뀌면 모든 사용자 화면에 즉시 반영)
+  // 파이어베이스 실시간 리스너
   useEffect(() => {
     const docRef = doc(db, 'schedules', 'project_schedule');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -95,9 +102,58 @@ function App() {
     }
   };
 
-  const isAnyAvailable = Object.values(scheduleData).some(
-    slot => slot.아침 === '가능' || slot.방과후 === '가능'
-  );
+  // 사용자 일정 클릭 시 신청 모달 열기 (가능한 경우만)
+  const handleCellClick = (date, timeSlot) => {
+    if (scheduleData[date][timeSlot] === '가능') {
+      setSelectedSlot({ date, timeSlot });
+      setApplicantName('');
+      setApplicantContact('');
+      setIsApplyModalOpen(true);
+    } else {
+      alert('이미 마감되었거나 신청할 수 없는 시간대입니다.');
+    }
+  };
+
+  // 신청 제출 시 파이어베이스 업데이트 (해당 슬롯 '불가능'으로 변경 + 신청자 기록)
+  const handleApplySubmit = async (e) => {
+    e.preventDefault();
+    if (!applicantName.trim()) {
+      alert('이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const { date, timeSlot } = selectedSlot;
+      
+      // 1. 해당 시간대 '불가능'으로 변경
+      const updatedSchedule = {
+        ...scheduleData,
+        [date]: {
+          ...scheduleData[date],
+          [timeSlot]: '불가능'
+        }
+      };
+
+      const docRef = doc(db, 'schedules', 'project_schedule');
+      await setDoc(docRef, updatedSchedule);
+
+      // 2. 신청자 명단에 저장 (선택 사항: applicants 컬렉션에 추가)
+      const applicantRef = doc(db, 'applicants', `${date}_${timeSlot}_${Date.now()}`);
+      await setDoc(applicantRef, {
+        date,
+        timeSlot,
+        name: applicantName,
+        contact: applicantContact,
+        appliedAt: new Date().toISOString()
+      });
+
+      alert(`[${date} ${timeSlot}] 신청이 완료되었습니다!`);
+      setIsApplyModalOpen(false);
+    } catch (error) {
+      console.error("신청 실패:", error);
+      alert('신청 중 오류가 발생했습니다.');
+    }
+  };
 
   const dates = ['11월 02일', '11월 03일', '11월 04일', '11월 05일', '11월 06일'];
   const timeSlots = ['아침', '방과후'];
@@ -187,7 +243,7 @@ function App() {
           </div>
         </section>
 
-        <section className="media-card clickable" onClick={() => setIsModalOpen(true)}>
+        <section className="media-card clickable" onClick={() => setIsNewsModalOpen(true)}>
           <h2>관련 뉴스 자료 (클릭해서 확대)</h2>
           <div className="img-wrapper">
             <img src="/news.png" alt="뉴스 자료" className="preview-img" />
@@ -195,17 +251,49 @@ function App() {
         </section>
       </main>
 
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+      {/* 뉴스 이미지 확대 모달 */}
+      {isNewsModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsNewsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <img src="/news.png" alt="뉴스 자료 확대" />
-            <button className="close-btn" onClick={() => setIsModalOpen(false)}>닫기</button>
+            <button className="close-btn" onClick={() => setIsNewsModalOpen(false)}>닫기</button>
+          </div>
+        </div>
+      )}
+
+      {/* 참가 신청 팝업 모달 */}
+      {isApplyModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsApplyModalOpen(false)}>
+          <div className="modal-content apply-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>참가 신청하기</h3>
+            <p className="selected-slot-info">
+              선택한 일정: <strong>{selectedSlot.date} ({selectedSlot.timeSlot})</strong>
+            </p>
+            <form onSubmit={handleApplySubmit} className="apply-form">
+              <label>이름</label>
+              <input 
+                type="text" 
+                placeholder="이름을 입력하세요" 
+                value={applicantName}
+                onChange={(e) => setApplicantName(e.target.value)}
+                required
+              />
+              <label>연락처 (또는 학번)</label>
+              <input 
+                type="text" 
+                placeholder="연락처나 학번을 입력하세요" 
+                value={applicantContact}
+                onChange={(e) => setApplicantContact(e.target.value)}
+              />
+              <button type="submit" className="submit-btn">신청 완료하기</button>
+            </form>
+            <button className="close-btn" onClick={() => setIsApplyModalOpen(false)}>취소</button>
           </div>
         </div>
       )}
 
       <section className="info-section">
-        <h3>참여 가능 일정표 (11월 2일 ~ 11월 6일)</h3>
+        <h3>참여 가능 일정표 (원하는 날짜를 클릭하여 신청하세요)</h3>
         
         <div className="table-responsive" style={{ margin: '20px 0' }}>
           <table className="schedule-table">
@@ -222,7 +310,12 @@ function App() {
                   {dates.map(date => {
                     const status = scheduleData[date]?.[slot] || '가능';
                     return (
-                      <td key={date} className={status === '불가능' ? 'impossible' : 'possible'}>
+                      <td 
+                        key={date} 
+                        onClick={() => handleCellClick(date, slot)}
+                        className={`user-clickable-cell ${status === '불가능' ? 'impossible' : 'possible'}`}
+                        title={status === '가능' ? '클릭하여 신청하기' : '마감됨'}
+                      >
                         {status}
                       </td>
                     );
@@ -231,23 +324,6 @@ function App() {
               ))}
             </tbody>
           </table>
-        </div>
-
-        <div style={{ marginTop: '20px' }}>
-          {isAnyAvailable ? (
-            <a 
-              href="https://forms.gle/UmbvnMtuZwSFnEd27" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="apply-btn"
-            >
-              참가 신청하기
-            </a>
-          ) : (
-            <button className="apply-btn disabled" disabled style={{ background: '#484f58', cursor: 'not-allowed' }}>
-              신청불가 (현재 가능한 일정이 없습니다)
-            </button>
-          )}
         </div>
       </section>
     </div>
