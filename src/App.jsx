@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import './App.css';
 
 const firebaseConfig = {
@@ -34,14 +34,12 @@ function App() {
   
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   
-  // 참가 신청 모달 상태 (새로운 필드 반영)
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState({ date: '', timeSlot: '' });
-  const [repInfo, setRepInfo] = useState('');          // 대표자 이름과 학번
-  const [otherMembers, setOtherMembers] = useState('');  // 다른 참석자 이름과 학번
-  const [repPhone, setRepPhone] = useState('');        // 대표자 전화번호
+  const [repInfo, setRepInfo] = useState('');          
+  const [otherMembers, setOtherMembers] = useState('');  
+  const [repPhone, setRepPhone] = useState('');        
 
-  // 파이어베이스 실시간 리스너
   useEffect(() => {
     const docRef = doc(db, 'schedules', 'project_schedule');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -72,12 +70,49 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleLogin = (e) => {
+  // 관리자 로그인 및 3회 실패 시 파이어베이스 기록 로직
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (passwordInput === 'ILOVEbuki0321!') {
       setIsAuthenticated(true);
+      setPasswordInput('');
     } else {
-      alert('비밀번호가 틀렸습니다. 3회 틀릴 경우 메일 발송됩니다.');
+      try {
+        const logRef = doc(db, 'admin_logs', 'login_failures');
+        const logSnap = await getDoc(logRef);
+        
+        let currentAttempts = 1;
+        let history = [];
+
+        if (logSnap.exists()) {
+          const data = logSnap.data();
+          currentAttempts = (data.failCount || 0) + 1;
+          history = data.history || [];
+        }
+
+        const newLogEntry = {
+          failedAt: new Date().toISOString(),
+          inputAttempt: passwordInput
+        };
+
+        history.push(newLogEntry);
+
+        await setDoc(logRef, {
+          failCount: currentAttempts,
+          history: history,
+          lastFailedAt: new Date().toISOString()
+        }, { merge: true });
+
+        if (currentAttempts >= 3) {
+          alert(`비밀번호를 3회 이상 틀렸습니다! 보안 로그가 파이어베이스에 기록되었습니다. (현재 실패 횟수: ${currentAttempts}회)`);
+        } else {
+          alert(`비밀번호가 틀렸습니다. (실패 횟수: ${currentAttempts}/3)`);
+        }
+      } catch (error) {
+        console.error("로그 기록 실패:", error);
+        alert('비밀번호가 틀렸습니다.');
+      }
+      setPasswordInput('');
     }
   };
 
@@ -136,7 +171,6 @@ function App() {
       const docRef = doc(db, 'schedules', 'project_schedule');
       await setDoc(docRef, updatedSchedule);
 
-      // 신청자 명단 저장
       const applicantRef = doc(db, 'applicants', `${date}_${timeSlot}_${Date.now()}`);
       await setDoc(applicantRef, {
         date,
@@ -260,7 +294,6 @@ function App() {
         </div>
       )}
 
-      {/* 참가 신청 팝업 모달 */}
       {isApplyModalOpen && (
         <div className="modal-overlay" onClick={() => setIsApplyModalOpen(false)}>
           <div className="modal-content apply-modal" onClick={(e) => e.stopPropagation()}>
@@ -278,10 +311,10 @@ function App() {
                 required
               />
 
-              <label>다른 참석자 이름 및 학번 </label>
+              <label>다른 참석자 이름 및 학번 (선택)</label>
               <input 
                 type="text" 
-                placeholder="예: 이나리 20509, 임용진 30117" 
+                placeholder="예: 김철수 10202, 이영희 10203" 
                 value={otherMembers}
                 onChange={(e) => setOtherMembers(e.target.value)}
               />
