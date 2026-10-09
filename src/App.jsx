@@ -7,9 +7,11 @@ function App() {
   const [passwordInput, setPasswordInput] = useState('');
   
   const [availableDate, setAvailableDate] = useState(() => {
-    return localStorage.getItem('availableDate') || '2026년 10월 10일 ~ 2026년 10월 20일';
+    return localStorage.getItem('availableDate') || '2026년 11월 2일 ~ 2026년 11월 6일';
   });
   const [tempDate, setTempDate] = useState(availableDate);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -26,18 +28,18 @@ function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (passwordInput === 'ILovebuki0321!') {
+    if (passwordInput === 'ILOVEbuki0321!') {
       setIsAuthenticated(true);
     } else {
-      alert('비밀번호가 틀렸어.');
+      alert('비밀번호가 틀렸습니다. 3회 틀릴 경우 메일 발송됩니다.');
     }
   };
 
   const handleSaveDate = (e) => {
     e.preventDefault();
-    setAvailableDate(tempDate);
     localStorage.setItem('availableDate', tempDate);
-    alert('참여 가능 날짜가 수정되었어.');
+    setAvailableDate(tempDate);
+    alert('참여 가능 날짜가 수정되었습니다.');
   };
 
   if (isAdminMode) {
@@ -46,7 +48,7 @@ function App() {
         <h1>관리자 전용 페이지</h1>
         {!isAuthenticated ? (
           <form onSubmit={handleLogin} className="login-form">
-            <p>관리자 로그인이 필요합니다.</p>
+            <p>관리자 로그인</p>
             <input
               type="password"
               placeholder="비밀번호 입력"
@@ -78,35 +80,41 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>프로젝트 영상 및 일정 안내</h1>
+        <h1>프로젝트 아카이브 및 일정</h1>
         <a href="#admin" className="admin-link">관리자 로그인</a>
       </header>
 
-      <main className="video-grid">
-        <section className="video-card">
-          <h2>영상 1</h2>
+      <main className="content-grid">
+        <section className="media-card">
+          <h2>주인공 폰</h2>
           <video controls width="100%">
-            <source src="/1.mp4" type="video/mp4" />
+            <source src="/주인공 폰.mp4" type="video/mp4" />
             브라우저가 동영상 재생을 지원하지 않습니다.
           </video>
         </section>
 
-        <section className="video-card">
-          <h2>영상 2</h2>
+        <section className="media-card">
+          <h2>경찰청 무전내용</h2>
           <video controls width="100%">
-            <source src="/2.mp4" type="video/mp4" />
+            <source src="/경찰청 무전내용.mp4" type="video/mp4" />
             브라우저가 동영상 재생을 지원하지 않습니다.
           </video>
         </section>
 
-        <section className="video-card">
-          <h2>영상 3</h2>
-          <video controls width="100%">
-            <source src="/3.mp4" type="video/mp4" />
-            브라우저가 동영상 재생을 지원하지 않습니다.
-          </video>
+        <section className="media-card clickable" onClick={() => setIsModalOpen(true)}>
+          <h2>관련 뉴스 자료 (클릭해서 확대)</h2>
+          <img src="/news.png" alt="뉴스 자료" className="preview-img" />
         </section>
       </main>
+
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <img src="/news.png" alt="뉴스 자료 확대" />
+            <button className="close-btn" onClick={() => setIsModalOpen(false)}>닫기</button>
+          </div>
+        </div>
+      )}
 
       <section className="info-section">
         <h3>참여 가능 날짜</h3>
@@ -116,7 +124,7 @@ function App() {
             href="https://forms.gle/UmbvnMtuZwSFnEd27" 
             target="_blank" 
             rel="noopener noreferrer"
-            style={{ color: '#007bff', fontWeight: 'bold', textDecoration: 'underline' }}
+            className="apply-btn"
           >
             참가 신청하기
           </a>
