@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, onSnapshot, setDoc, collection, addTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import './App.css';
 
 const firebaseConfig = {
@@ -34,11 +34,12 @@ function App() {
   
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   
-  // 참가 신청 모달 상태
+  // 참가 신청 모달 상태 (새로운 필드 반영)
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState({ date: '', timeSlot: '' });
-  const [applicantName, setApplicantName] = useState('');
-  const [applicantContact, setApplicantContact] = useState('');
+  const [repInfo, setRepInfo] = useState('');          // 대표자 이름과 학번
+  const [otherMembers, setOtherMembers] = useState('');  // 다른 참석자 이름과 학번
+  const [repPhone, setRepPhone] = useState('');        // 대표자 전화번호
 
   // 파이어베이스 실시간 리스너
   useEffect(() => {
@@ -102,30 +103,28 @@ function App() {
     }
   };
 
-  // 사용자 일정 클릭 시 신청 모달 열기 (가능한 경우만)
   const handleCellClick = (date, timeSlot) => {
     if (scheduleData[date][timeSlot] === '가능') {
       setSelectedSlot({ date, timeSlot });
-      setApplicantName('');
-      setApplicantContact('');
+      setRepInfo('');
+      setOtherMembers('');
+      setRepPhone('');
       setIsApplyModalOpen(true);
     } else {
       alert('이미 마감되었거나 신청할 수 없는 시간대입니다.');
     }
   };
 
-  // 신청 제출 시 파이어베이스 업데이트 (해당 슬롯 '불가능'으로 변경 + 신청자 기록)
   const handleApplySubmit = async (e) => {
     e.preventDefault();
-    if (!applicantName.trim()) {
-      alert('이름을 입력해주세요.');
+    if (!repInfo.trim() || !repPhone.trim()) {
+      alert('대표자 정보와 전화번호는 필수 입력입니다.');
       return;
     }
 
     try {
       const { date, timeSlot } = selectedSlot;
       
-      // 1. 해당 시간대 '불가능'으로 변경
       const updatedSchedule = {
         ...scheduleData,
         [date]: {
@@ -137,13 +136,14 @@ function App() {
       const docRef = doc(db, 'schedules', 'project_schedule');
       await setDoc(docRef, updatedSchedule);
 
-      // 2. 신청자 명단에 저장 (선택 사항: applicants 컬렉션에 추가)
+      // 신청자 명단 저장
       const applicantRef = doc(db, 'applicants', `${date}_${timeSlot}_${Date.now()}`);
       await setDoc(applicantRef, {
         date,
         timeSlot,
-        name: applicantName,
-        contact: applicantContact,
+        representative: repInfo,
+        otherMembers: otherMembers,
+        phone: repPhone,
         appliedAt: new Date().toISOString()
       });
 
@@ -251,7 +251,6 @@ function App() {
         </section>
       </main>
 
-      {/* 뉴스 이미지 확대 모달 */}
       {isNewsModalOpen && (
         <div className="modal-overlay" onClick={() => setIsNewsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -270,21 +269,32 @@ function App() {
               선택한 일정: <strong>{selectedSlot.date} ({selectedSlot.timeSlot})</strong>
             </p>
             <form onSubmit={handleApplySubmit} className="apply-form">
-              <label>이름</label>
+              <label>대표자 이름 및 학번</label>
               <input 
                 type="text" 
-                placeholder="이름을 입력하세요" 
-                value={applicantName}
-                onChange={(e) => setApplicantName(e.target.value)}
+                placeholder="예: 홍길동 10201" 
+                value={repInfo}
+                onChange={(e) => setRepInfo(e.target.value)}
                 required
               />
-              <label>연락처 (또는 학번)</label>
+
+              <label>다른 참석자 이름 및 학번 </label>
               <input 
                 type="text" 
-                placeholder="연락처나 학번을 입력하세요" 
-                value={applicantContact}
-                onChange={(e) => setApplicantContact(e.target.value)}
+                placeholder="예: 이나리 20509, 임용진 30117" 
+                value={otherMembers}
+                onChange={(e) => setOtherMembers(e.target.value)}
               />
+
+              <label>대표자 전화번호</label>
+              <input 
+                type="text" 
+                placeholder="예: 010-1234-5678" 
+                value={repPhone}
+                onChange={(e) => setRepPhone(e.target.value)}
+                required
+              />
+
               <button type="submit" className="submit-btn">신청 완료하기</button>
             </form>
             <button className="close-btn" onClick={() => setIsApplyModalOpen(false)}>취소</button>
