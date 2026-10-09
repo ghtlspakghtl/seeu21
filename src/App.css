@@ -66,11 +66,10 @@ body {
   color: #f0f6fc;
 }
 
-.media-card video, .preview-img {
+.media-card video {
   width: 100%;
+  height: auto; /* 비율 유지하면서 높이 자동 조절 ㅅㅂ 안되면 줴줴이야*/
   border-radius: 8px;
-  object-fit: cover;
-  max-height: 220px;
   background: #000;
 }
 
