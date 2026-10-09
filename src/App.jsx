@@ -6,11 +6,20 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   
-  const [availableDate, setAvailableDate] = useState(() => {
-    return localStorage.getItem('availableDate') || '2026년 11월 2일 ~ 2026년 11월 6일';
+  // 날짜별/시간대별 상태 관리 (기본값: 모두 '가능')
+  const [scheduleData, setScheduleData] = useState(() => {
+    const saved = localStorage.getItem('scheduleData');
+    if (saved) return JSON.parse(saved);
+    return {
+      '11월 02일': { 아침: '가능', 방과후: '가능' },
+      '11월 03일': { 아침: '가능', 방과후: '가능' },
+      '11월 04일': { 아침: '가능', 방과후: '가능' },
+      '11월 05일': { 아침: '가능', 방과후: '가능' },
+      '11월 06일': { 아침: '가능', 방과후: '가능' },
+    };
   });
-  const [tempDate, setTempDate] = useState(availableDate);
 
+  const [tempSchedule, setTempSchedule] = useState(scheduleData);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -35,12 +44,30 @@ function App() {
     }
   };
 
-  const handleSaveDate = (e) => {
-    e.preventDefault();
-    localStorage.setItem('availableDate', tempDate);
-    setAvailableDate(tempDate);
-    alert('참여 가능 날짜가 수정되었습니다.');
+  const handleStatusToggle = (date, timeSlot) => {
+    setTempSchedule(prev => ({
+      ...prev,
+      [date]: {
+        ...prev[date],
+        [timeSlot]: prev[date][timeSlot] === '가능' ? '불가능' : '가능'
+      }
+    }));
   };
+
+  const handleSaveSchedule = (e) => {
+    e.preventDefault();
+    setScheduleData(tempSchedule);
+    localStorage.setItem('scheduleData', JSON.stringify(tempSchedule));
+    alert('참여 가능 일정이 수정되었습니다.');
+  };
+
+  // 전체 중 하나라도 '가능'한 슬롯이 있는지 확인 (모두 불가능하면 신청 불가)
+  const isAnyAvailable = Object.values(scheduleData).some(
+    slot => slot.아침 === '가능' || slot.방과후 === '가능'
+  );
+
+  const dates = ['11월 02일', '11월 03일', '11월 04일', '11월 05일', '11월 06일'];
+  const timeSlots = ['아침', '방과후'];
 
   if (isAdminMode) {
     return (
@@ -59,15 +86,37 @@ function App() {
           </form>
         ) : (
           <div className="admin-dashboard">
-            <form onSubmit={handleSaveDate} className="edit-form">
-              <label>참여 가능 날짜 수정</label>
-              <input
-                type="text"
-                value={tempDate}
-                onChange={(e) => setTempDate(e.target.value)}
-              />
-              <button type="submit">저장하기</button>
-            </form>
+            <p className="admin-notice">클릭해서 '가능 / 불가능' 상태를 변경하세요.</p>
+            <div className="table-responsive">
+              <table className="schedule-table">
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    {dates.map(date => <th key={date}>{date}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeSlots.map(slot => (
+                    <tr key={slot}>
+                      <td><strong>{slot}</strong></td>
+                      {dates.map(date => {
+                        const status = tempSchedule[date][slot];
+                        return (
+                          <td 
+                            key={date} 
+                            onClick={() => handleStatusToggle(date, slot)}
+                            className={`clickable-cell ${status === '불가능' ? 'impossible' : 'possible'}`}
+                          >
+                            {status}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button onClick={handleSaveSchedule} className="save-btn">저장하기</button>
             <button className="back-btn" onClick={() => window.location.hash = ''}>
               메인 화면으로 돌아가기
             </button>
@@ -86,7 +135,7 @@ function App() {
 
       <main className="content-grid">
         <section className="media-card phone-card">
-          <h2>당시 경찰 폰</h2>
+          <h2>주인공 폰</h2>
           <video controls width="100%">
             <source src="/주인공 폰.mp4" type="video/mp4" />
             브라우저가 동영상 재생을 지원하지 않습니다.
@@ -117,17 +166,49 @@ function App() {
       )}
 
       <section className="info-section">
-        <h3>참여 가능 날짜</h3>
-        <p className="highlight-date">{availableDate}</p>
-        <div style={{ marginTop: '15px' }}>
-          <a 
-            href="https://forms.gle/UmbvnMtuZwSFnEd27" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="apply-btn"
-          >
-            참가 신청하기
-          </a>
+        <h3>참여 가능 일정표 (11월 2일 ~ 11월 6일)</h3>
+        
+        <div className="table-responsive" style={{ margin: '20px 0' }}>
+          <table className="schedule-table">
+            <thead>
+              <tr>
+                <th>날짜</th>
+                {dates.map(date => <th key={date}>{date}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map(slot => (
+                <tr key={slot}>
+                  <td><strong>{slot}</strong></td>
+                  {dates.map(date => {
+                    const status = scheduleData[date][slot];
+                    return (
+                      <td key={date} className={status === '불가능' ? 'impossible' : 'possible'}>
+                        {status}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: '20px' }}>
+          {isAnyAvailable ? (
+            <a 
+              href="https://forms.gle/UmbvnMtuZwSFnEd27" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="apply-btn"
+            >
+              참가 신청하기
+            </a>
+          ) : (
+            <button className="apply-btn disabled" disabled style={{ background: '#484f58', cursor: 'not-allowed' }}>
+              신청불가 (현재 가능한 일정이 없습니다)
+            </button>
+          )}
         </div>
       </section>
     </div>
