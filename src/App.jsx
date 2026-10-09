@@ -1,26 +1,57 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import './App.css';
+
+// 파이어베이스 설정값 적용 완료
+const firebaseConfig = {
+  apiKey: "AIzaSyCq1ixjy0orxEhiPFa4wcLG83ryVw15-j0",
+  authDomain: "seeu21-28870.firebaseapp.com",
+  projectId: "seeu21-28870",
+  storageBucket: "seeu21-28870.firebasestorage.app",
+  messagingSenderId: "940350747489",
+  appId: "1:940350747489:web:1669d1e8f2b85ca7dd8b20",
+  measurementId: "G-4MVLDT84NN"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const defaultSchedule = {
+  '11월 02일': { 아침: '가능', 방과후: '가능' },
+  '11월 03일': { 아침: '가능', 방과후: '가능' },
+  '11월 04일': { 아침: '가능', 방과후: '가능' },
+  '11월 05일': { 아침: '가능', 방과후: '가능' },
+  '11월 06일': { 아침: '가능', 방과후: '가능' },
+};
 
 function App() {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   
-  // 날짜별/시간대별 상태 관리 (기본값: 모두 '가능')
-  const [scheduleData, setScheduleData] = useState(() => {
-    const saved = localStorage.getItem('scheduleData');
-    if (saved) return JSON.parse(saved);
-    return {
-      '11월 02일': { 아침: '가능', 방과후: '가능' },
-      '11월 03일': { 아침: '가능', 방과후: '가능' },
-      '11월 04일': { 아침: '가능', 방과후: '가능' },
-      '11월 05일': { 아침: '가능', 방과후: '가능' },
-      '11월 06일': { 아침: '가능', 방과후: '가능' },
-    };
-  });
-
-  const [tempSchedule, setTempSchedule] = useState(scheduleData);
+  const [scheduleData, setScheduleData] = useState(defaultSchedule);
+  const [tempSchedule, setTempSchedule] = useState(defaultSchedule);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 파이어베이스에서 실시간 일정 불러오기
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const docRef = doc(db, 'schedules', 'project_schedule');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setScheduleData(docSnap.data());
+          setTempSchedule(docSnap.data());
+        } else {
+          await setDoc(docRef, defaultSchedule);
+        }
+      } catch (error) {
+        console.error("데이터 불러오기 실패:", error);
+      }
+    };
+    fetchSchedule();
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -54,14 +85,19 @@ function App() {
     }));
   };
 
-  const handleSaveSchedule = (e) => {
+  const handleSaveSchedule = async (e) => {
     e.preventDefault();
-    setScheduleData(tempSchedule);
-    localStorage.setItem('scheduleData', JSON.stringify(tempSchedule));
-    alert('참여 가능 일정이 수정되었습니다.');
+    try {
+      const docRef = doc(db, 'schedules', 'project_schedule');
+      await setDoc(docRef, tempSchedule);
+      setScheduleData(tempSchedule);
+      alert('참여 가능 일정이 서버에 저장되어 모든 사용자에게 반영되었습니다.');
+    } catch (error) {
+      console.error("저장 실패:", error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
-  // 전체 중 하나라도 '가능'한 슬롯이 있는지 확인 (모두 불가능하면 신청 불가)
   const isAnyAvailable = Object.values(scheduleData).some(
     slot => slot.아침 === '가능' || slot.방과후 === '가능'
   );
@@ -86,7 +122,7 @@ function App() {
           </form>
         ) : (
           <div className="admin-dashboard">
-            <p className="admin-notice">클릭해서 '가능 / 불가능' 상태를 변경하세요.</p>
+            <p className="admin-notice">클릭해서 '가능 / 불가능' 상태를 변경하세요. 저장하면 전체에 반영됩니다.</p>
             <div className="table-responsive">
               <table className="schedule-table">
                 <thead>
@@ -100,7 +136,7 @@ function App() {
                     <tr key={slot}>
                       <td><strong>{slot}</strong></td>
                       {dates.map(date => {
-                        const status = tempSchedule[date][slot];
+                        const status = tempSchedule[date]?.[slot] || '가능';
                         return (
                           <td 
                             key={date} 
@@ -116,7 +152,7 @@ function App() {
                 </tbody>
               </table>
             </div>
-            <button onClick={handleSaveSchedule} className="save-btn">저장하기</button>
+            <button onClick={handleSaveSchedule} className="save-btn">서버에 저장하기</button>
             <button className="back-btn" onClick={() => window.location.hash = ''}>
               메인 화면으로 돌아가기
             </button>
@@ -181,7 +217,7 @@ function App() {
                 <tr key={slot}>
                   <td><strong>{slot}</strong></td>
                   {dates.map(date => {
-                    const status = scheduleData[date][slot];
+                    const status = scheduleData[date]?.[slot] || '가능';
                     return (
                       <td key={date} className={status === '불가능' ? 'impossible' : 'possible'}>
                         {status}
