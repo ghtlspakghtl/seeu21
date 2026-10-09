@@ -38,9 +38,10 @@ body {
 
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 25px;
   margin-bottom: 40px;
+  align-items: start; /* 세로로 길쭉해지는 거 방지, 위쪽 정렬 */
 }
 
 .media-card {
@@ -50,6 +51,8 @@ body {
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   transition: transform 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .media-card.clickable {
@@ -66,11 +69,24 @@ body {
   color: #f0f6fc;
 }
 
-.media-card video {
+/* 주인공 폰 세로 영상 영역 (비율 유지 및 최대 높이 제한) */
+.media-card.phone-card video {
   width: 100%;
-  height: auto; /* 비율 유지하면서 높이 자동 조절 ㅅㅂ 안되면 줴줴이야*/
-  border-radius: 8px;
+  max-height: 450px;
+  object-fit: contain;
   background: #000;
+  border-radius: 8px;
+  margin: auto 0;
+}
+
+/* 일반 가로형 미디어 및 이미지 영역 */
+.media-card video:not(.phone-card video), .preview-img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  background: #000;
+  border-radius: 8px;
 }
 
 .modal-overlay {
@@ -190,7 +206,7 @@ body {
   background: #2ea043;
 }
 
-.back-btn {
+.back-db-btn, .back-btn {
   background: #21262d;
   border: 1px solid #30363d;
   color: #c9d1d9;
