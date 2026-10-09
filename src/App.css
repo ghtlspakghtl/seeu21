@@ -1,196 +1,55 @@
-body {
-  margin: 0;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  background-color: #0d1117;
-  color: #c9d1d9;
+/* 일정표 테이블 스타일 */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-}
-
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #30363d;
-  padding-bottom: 20px;
-  margin-bottom: 40px;
-}
-
-.app-header h1 {
-  font-size: 24px;
-  color: #f0f6fc;
-  margin: 0;
-}
-
-.admin-link {
-  font-size: 14px;
-  color: #8b949e;
-  text-decoration: none;
-}
-.admin-link:hover {
-  color: #58a6ff;
-  text-decoration: underline;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
-  align-items: start; /* 세로로 길쭉해지는 거 방지, 위쪽 정렬 */
-}
-
-.media-card {
-  background: #161b22;
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #0d1117;
+  border-radius: 8px;
+  overflow: hidden;
   border: 1px solid #30363d;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-  display: flex;
-  flex-direction: column;
 }
 
-.media-card.clickable {
-  cursor: pointer;
-}
-.media-card.clickable:hover {
-  border-color: #58a6ff;
-  transform: translateY(-3px);
-}
-
-.media-card h2 {
-  font-size: 16px;
-  margin-bottom: 15px;
-  color: #f0f6fc;
-}
-
-/* 주인공 폰 세로 영상 영역 (비율 유지 및 최대 높이 제한) */
-.media-card.phone-card video {
-  width: 100%;
-  max-height: 450px;
-  object-fit: contain;
-  background: #000;
-  border-radius: 8px;
-  margin: auto 0;
-}
-
-/* 일반 가로형 미디어 및 이미지 영역 */
-.media-card video:not(.phone-card video), .preview-img {
-  width: 100%;
-  height: auto;
-  max-height: 280px;
-  object-fit: contain;
-  background: #000;
-  border-radius: 8px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #161b22;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 90%;
-  max-height: 90vh;
+.schedule-table th, .schedule-table td {
+  padding: 12px;
   text-align: center;
   border: 1px solid #30363d;
+  font-size: 14px;
 }
 
-.modal-content img {
-  max-width: 100%;
-  max-height: 75vh;
-  border-radius: 6px;
-  object-fit: contain;
-}
-
-.close-btn {
-  margin-top: 15px;
-  padding: 8px 20px;
+.schedule-table th {
   background: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  cursor: pointer;
+  color: #f0f6fc;
+}
+
+.schedule-table td.possible {
+  color: #3fb950;
   font-weight: bold;
 }
-.close-btn:hover {
+
+.schedule-table td.impossible {
+  color: #f85149;
+  font-weight: bold;
+}
+
+.clickable-cell {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.clickable-cell:hover {
   background: #30363d;
 }
 
-.info-section {
-  background: #161b22;
-  border: 1px solid #30363d;
-  padding: 30px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+.admin-notice {
+  color: #8b949e;
+  font-size: 13px;
+  margin-bottom: 15px;
 }
 
-.info-section h3 {
-  margin: 0 0 10px 0;
-  color: #f0f6fc;
-}
-
-.highlight-date {
-  font-size: 22px;
-  font-weight: bold;
-  color: #58a6ff;
-  margin: 10px 0;
-}
-
-.apply-btn {
-  display: inline-block;
-  padding: 12px 30px;
-  background: #238636;
-  color: white;
-  font-weight: bold;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-.apply-btn:hover {
-  background: #2ea043;
-}
-
-.admin-container {
-  max-width: 450px;
-  margin: 100px auto;
-  background: #161b22;
-  border: 1px solid #30363d;
-  padding: 35px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  text-align: center;
-}
-
-.login-form input, .edit-form input {
-  width: 100%;
-  padding: 12px;
-  margin: 15px 0;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  color: #c9d1d9;
-  box-sizing: border-box;
-}
-
-.login-form button, .edit-form button, .back-btn {
+.save-btn {
   width: 100%;
   padding: 12px;
   background: #238636;
@@ -199,18 +58,8 @@ body {
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 15px;
 }
-
-.login-form button:hover, .edit-form button:hover {
+.save-btn:hover {
   background: #2ea043;
-}
-
-.back-db-btn, .back-btn {
-  background: #21262d;
-  border: 1px solid #30363d;
-  color: #c9d1d9;
-}
-.back-btn:hover {
-  background: #30363d;
 }
