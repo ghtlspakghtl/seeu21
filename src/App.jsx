@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, onSnapshot, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import './App.css';
 
 const firebaseConfig = {
@@ -70,7 +70,7 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // 관리자 로그인 및 3회 실패 시 파이어베이스 기록 로직
+  // 로그인 실패 시 IP 주소까지 긁어서 파이어베이스에 기록하는 함수
   const handleLogin = async (e) => {
     e.preventDefault();
     if (passwordInput === 'ILOVEbuki0321!') {
@@ -78,6 +78,17 @@ function App() {
       setPasswordInput('');
     } else {
       try {
+        // 1. 접속한 클라이언트의 IP 주소 가져오기 (외부 무료 API 활용)
+        let clientIp = 'Unknown IP';
+        try {
+          const ipResponse = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipResponse.json();
+          clientIp = ipData.ip;
+        } catch (ipError) {
+          console.error("IP 주소 가져오기 실패:", ipError);
+        }
+
+        // 2. 파이어베이스에서 기존 로그 불러오기
         const logRef = doc(db, 'admin_logs', 'login_failures');
         const logSnap = await getDoc(logRef);
         
@@ -90,21 +101,25 @@ function App() {
           history = data.history || [];
         }
 
+        // 3. 새로운 실패 로그 객체 생성 (IP 포함)
         const newLogEntry = {
           failedAt: new Date().toISOString(),
-          inputAttempt: passwordInput
+          inputAttempt: passwordInput,
+          ipAddress: clientIp
         };
 
         history.push(newLogEntry);
 
+        // 4. 파이어베이스에 업데이트
         await setDoc(logRef, {
           failCount: currentAttempts,
           history: history,
-          lastFailedAt: new Date().toISOString()
+          lastFailedAt: new Date().toISOString(),
+          lastIpAddress: clientIp
         }, { merge: true });
 
         if (currentAttempts >= 3) {
-          alert(`비밀번호를 3회 이상 틀렸습니다! 보안 로그가 파이어베이스에 기록되었습니다. (현재 실패 횟수: ${currentAttempts}회)`);
+          alert(`비밀번호를 3회 이상 틀렸습니다! (IP: ${clientIp}) 보안 로그가 파이어베이스에 기록되었습니다.`);
         } else {
           alert(`비밀번호가 틀렸습니다. (실패 횟수: ${currentAttempts}/3)`);
         }
