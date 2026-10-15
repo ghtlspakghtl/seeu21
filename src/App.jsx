@@ -16,10 +16,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-//ㅅㅂ 왜!!!!!!!!
 const defaultSchedule = {
-  '11월 06일': { 아침: '가능', 방과후: '가능' },
-  '11월 09일': { 아침: '가능', 방과후: '가능' },
+  '11월 6일': { 아침: '가능', 방과후: '가능' },
+  '11월 9일': { 아침: '가능', 방과후: '가능' },
   '11월 10일': { 아침: '가능', 방과후: '가능' },
   '11월 11일': { 아침: '가능', 방과후: '가능' },
   '11월 12일': { 아침: '가능', 방과후: '가능' },
@@ -215,9 +214,17 @@ function App() {
     }
   };
 
-  // 파이어베이스(또는 임시 데이터)에 들어있는 날짜들을 동적으로 추출
-  const dates = Object.keys(scheduleData);
-  const tempDates = Object.keys(tempSchedule);
+  // 날짜를 숫자 기준으로 깔끔하게 정렬하는 함수 (예: "11월 6일" -> 6)
+  const sortDates = (dateKeys) => {
+    return dateKeys.sort((a, b) => {
+      const dayA = parseInt(a.replace(/[^0-9]/g, '')) || 0;
+      const dayB = parseInt(b.replace(/[^0-9]/g, '')) || 0;
+      return dayA - dayB;
+    });
+  };
+
+  const dates = sortDates(Object.keys(scheduleData));
+  const tempDates = sortDates(Object.keys(tempSchedule));
   const timeSlots = ['아침', '방과후'];
 
   if (isAdminMode) {
@@ -345,7 +352,7 @@ function App() {
               <label>다른 참석자 이름 및 학번</label>
               <input 
                 type="text" 
-                placeholder="예: 이시우 20509 , 이민석 20202 , 강건호 30601 .." 
+                placeholder="예: 이나리 20509 , 이민석 20202 , 강건호 30601.." 
                 value={otherMembers}
                 onChange={(e) => setOtherMembers(e.target.value)}
               />
