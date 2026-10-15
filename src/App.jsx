@@ -16,9 +16,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// 네가 원하는 새로운 기본 일정 구조
 const defaultSchedule = {
-  '11월 06일': { 아침: '가능', 방과후: '가능' },
-  '11월 09일': { 아침: '가능', 방과후: '가능' },
+  '11월 6일': { 아침: '가능', 방과후: '가능' },
+  '11월 9일': { 아침: '가능', 방과후: '가능' },
   '11월 10일': { 아침: '가능', 방과후: '가능' },
   '11월 11일': { 아침: '가능', 방과후: '가능' },
   '11월 12일': { 아침: '가능', 방과후: '가능' },
@@ -29,7 +30,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   
-  // 쿨타임 관련 상태
   const [cooldownTime, setCooldownTime] = useState(0);
 
   const [scheduleData, setScheduleData] = useState(defaultSchedule);
@@ -43,7 +43,6 @@ function App() {
   const [otherMembers, setOtherMembers] = useState('');  
   const [repPhone, setRepPhone] = useState('');        
 
-  // 쿨타임 타이머 작동 훅
   useEffect(() => {
     let timer;
     if (cooldownTime > 0) {
@@ -86,7 +85,7 @@ function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (cooldownTime > 0) return; // 쿨타임 중이면 차단
+    if (cooldownTime > 0) return;
 
     if (passwordInput === 'ILOVEbuki0321!') {
       setIsAuthenticated(true);
@@ -129,7 +128,6 @@ function App() {
           lastIpAddress: clientIp
         }, { merge: true });
 
-        // 3회 이상 틀리면 30초 쿨타임 발동
         if (currentAttempts >= 3) {
           setCooldownTime(30);
           alert(`비밀번호를 3회 이상 틀렸습니다! (IP: ${clientIp}) 보안을 위해 30초 동안 로그인이 제한됩니다.`);
@@ -167,7 +165,7 @@ function App() {
   };
 
   const handleCellClick = (date, timeSlot) => {
-    if (scheduleData[date][timeSlot] === '가능') {
+    if (scheduleData[date]?.[timeSlot] === '가능') {
       setSelectedSlot({ date, timeSlot });
       setRepInfo('');
       setOtherMembers('');
@@ -217,7 +215,9 @@ function App() {
     }
   };
 
-  const dates = ['11월 02일', '11월 03일', '11월 04일', '11월 05일', '11월 06일'];
+  // 파이어베이스(또는 임시 데이터)에 들어있는 날짜들을 동적으로 추출
+  const dates = Object.keys(scheduleData);
+  const tempDates = Object.keys(tempSchedule);
   const timeSlots = ['아침', '방과후'];
 
   if (isAdminMode) {
@@ -246,14 +246,14 @@ function App() {
                 <thead>
                   <tr>
                     <th>날짜</th>
-                    {dates.map(date => <th key={date}>{date}</th>)}
+                    {tempDates.map(date => <th key={date}>{date}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {timeSlots.map(slot => (
                     <tr key={slot}>
                       <td><strong>{slot}</strong></td>
-                      {dates.map(date => {
+                      {tempDates.map(date => {
                         const status = tempSchedule[date]?.[slot] || '가능';
                         return (
                           <td 
