@@ -16,7 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 네가 원하는 새로운 기본 일정 구조
+//ㅅㅂ 왜!!!!!!!!
 const defaultSchedule = {
   '11월 6일': { 아침: '가능', 방과후: '가능' },
   '11월 9일': { 아침: '가능', 방과후: '가능' },
@@ -342,10 +342,10 @@ function App() {
                 required
               />
 
-              <label>다른 참석자 이름 및 학번 (선택)</label>
+              <label>다른 참석자 이름 및 학번</label>
               <input 
                 type="text" 
-                placeholder="예: 김철수 10202, 이영희 10203" 
+                placeholder="예: 이시우 20509 , 이민석 20202 , 강건호 30601 .." 
                 value={otherMembers}
                 onChange={(e) => setOtherMembers(e.target.value)}
               />
